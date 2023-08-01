@@ -16,6 +16,8 @@ const { default: makeServer } = config;
 export default {
   name: 'ember-cli-mirage',
   initialize(application) {
+    setApplicationGlobal(application)
+
     if (makeServer) {
       application.register('mirage:make-server', makeServer, {
         instantiate: false,
@@ -55,4 +57,22 @@ function _defaultEnabled(env, addonConfig) {
   let usingInTest = env === 'test';
 
   return usingInDev || usingInTest;
+}
+
+function setApplicationGlobal(application) {
+  let theGlobal
+    
+  if (typeof window !== 'undefined') {
+    theGlobal = window
+  } else if (typeof global !== 'undefined') {
+    theGlobal = global
+  } else if (typeof self !== 'undefined') {
+    theGlobal = self
+  }
+
+  try {
+    theGlobal.emberCliMirageAppInstance = application
+  } catch(err) {
+    throw new Error('ember-cli-mirage/initializers/ember-cli-mirage | could not set application global: ', err)
+  }
 }

@@ -15,6 +15,32 @@ let DsModels, Models;
 let DsSerializers, Serializers;
 
 /**
+ * Gets application instance from global context which was set inside initializers/ember-cli-mirage
+ *
+ * @method getAppInstance
+ * @private
+ * @hide
+ * @return {Object} ApplicationInstance
+ */
+function getAppInstance() {
+  let theGlobal
+    
+  if (typeof window !== 'undefined') {
+    theGlobal = window
+  } else if (typeof global !== 'undefined') {
+    theGlobal = global
+  } else if (typeof self !== 'undefined') {
+    theGlobal = self
+  }
+
+  try {
+    return theGlobal.emberCliMirageAppInstance
+  } catch(err) {
+    throw new Error('ember-cli-mirage/ember-data | global "emberCliMirageAppInstance" could not be found: ', err)
+  }
+}
+
+/**
  * Get all ember data models under the app's namespaces
  *
  * @method getDsModels
@@ -26,6 +52,9 @@ export function getDsModels() {
   if (DsModels) {
     return DsModels;
   }
+
+  let appInstance = getAppInstance()
+  let store = appInstance.__container__.lookup('service:store')
 
   let moduleMap = requirejs.entries;
   let classicModelMatchRegex = new RegExp(`^${modulePrefix}/models/(.*)$`, 'i');
@@ -46,7 +75,7 @@ export function getDsModels() {
     if (matches && matches[1]) {
       let modelName = matches[1];
 
-      let model = require(path, null, null, true).default;
+      let model = store.modelFor(modelName);
       if (isDsModel(model)) {
         DsModels[modelName] = model;
       }
